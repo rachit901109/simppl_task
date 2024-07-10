@@ -1,2 +1,4 @@
 .env
-data/
+raw_data/
+.ipynb_checkpoints/
+format.txt

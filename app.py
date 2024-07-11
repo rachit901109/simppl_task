@@ -7,8 +7,8 @@ import networkx as nx
 from pyvis.network import Network
 import json
 from collections import defaultdict
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objs as go
 
 @st.cache_data
 def load_profile_data():
@@ -92,7 +92,7 @@ st.markdown("""
 
 # streamlit app
 st.sidebar.title("Instagram")
-section = st.sidebar.radio("Go to", ["Profiles", "Network Graph", "Hashtags"])
+section = st.sidebar.radio("Go to", ["Profiles", "Network Graph", "Hashtags", "Fraudulent Post Analysis"])
 
 def get_image(url):
     try:
@@ -139,23 +139,20 @@ if section == "Hashtags":
     df = load_hashtag_data(selected_hashtag)
     # type of post: image, video or sidecar
     st.subheader(f"Distribution of Post Types for {selected_hashtag}")
-    fig, ax = plt.subplots()
-    df['type'].value_counts().plot(kind='pie', autopct='%1.1f%%', ax=ax)
-    ax.set_ylabel('')  # Remove y-label
-    st.pyplot(fig)
+    post_type_counts = df['type'].value_counts().reset_index()
+    post_type_counts.columns = ['Post Type', 'Count']
+    fig = px.pie(post_type_counts, values='Count', names='Post Type', title=f'Distribution of Post Types for {selected_hashtag}')
+    st.plotly_chart(fig)
 
     df['upload_date'] = pd.to_datetime(df['upload_date'])
 
     # scatter plot of likes and comments over time
     st.subheader(f"Likes and Comments Over Time for {selected_hashtag}")
-    fig, ax = plt.subplots(figsize=(12, 6))
-    sns.scatterplot(x='upload_date', y='likes_count', data=df, label='Likes', ax=ax)
-    sns.scatterplot(x='upload_date', y='comments_count', data=df, label='Comments', ax=ax)
-    ax.set_xlabel('Upload Date')
-    ax.set_ylabel('Count')
-    ax.legend()
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df['upload_date'], y=df['likes_count'], mode='markers', name='Likes', marker=dict(color='blue')))
+    fig.add_trace(go.Scatter(x=df['upload_date'], y=df['comments_count'], mode='markers', name='Comments', marker=dict(color='red')))
+    fig.update_layout(title=f'Likes and Comments Over Time for {selected_hashtag}', xaxis_title='Upload Date', yaxis_title='Count', xaxis=dict(showgrid=False), yaxis=dict(showgrid=False))
+    st.plotly_chart(fig)
 
     # Summary statistics
     st.subheader("Summary Statistics")
@@ -247,3 +244,7 @@ if section == "Network Graph":
         
         highlighted_net.save_graph("highlighted_network_graph.html")
         st.components.v1.html(open("highlighted_network_graph.html", 'r').read(), height=700)
+
+if section == "Fraudulent Post Analysis":
+    st.title("Coming Soon")
+    st.write("Currently, searching data on spam and possibly fraudulent post data, accounts, hashtags, and APIs to categorize and fact check them.")
